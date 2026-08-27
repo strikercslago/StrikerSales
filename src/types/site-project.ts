@@ -2,22 +2,22 @@ import type { Json, Tables, TablesInsert, TablesUpdate } from "@/types/database.
 
 export const SITE_PROJECT_STAGE_KEYS = [
   "discovery",
+  "research",
   "strategy",
-  "content",
   "architecture",
   "visual_direction",
   "design_system",
-  "wireframes",
+  "wireframe",
   "high_fidelity",
-  "prototype",
+  "assets",
   "development",
-  "integrations",
+  "motion",
   "responsive",
   "accessibility",
   "performance",
   "seo",
-  "qa",
-  "approval",
+  "qa_visual",
+  "qa_functional",
   "publication",
   "delivery",
 ] as const;
@@ -38,16 +38,46 @@ export type SiteProjectStage = Tables<"site_project_stages">;
 export type SiteProjectStageItem = Tables<"site_project_stage_items">;
 export type SiteProjectFile = Tables<"site_project_files">;
 export type SiteProjectHistoryEvent = Tables<"site_project_history">;
+export type SiteProjectScore = Tables<"site_project_scores">;
+export type SiteProjectQaItem = Tables<"site_project_qa_items">;
 
 export type CreateSiteProjectInput = Pick<SiteProjectInsert, "name"> &
+  Partial<Pick<SiteProjectInsert, "id" | "owner_id">> &
   Partial<Pick<SiteProjectInsert, "client_id" | "responsible_user_id" | "start_date" | "estimated_deadline" | "platform">>;
 
 export type SiteProjectSummary = SiteProject & {
   progressPercent: number;
+  clientName?: string;
+  clientCompany?: string;
+  segment?: string;
+  currentStageTitle: string;
+  currentStageStatus: SiteProjectStageStatus;
+  strikerScore?: number;
 };
 
 export type SiteProjectStageDetail = SiteProjectStage & {
   items: SiteProjectStageItem[];
+};
+
+export type SiteProjectOverview = {
+  project: SiteProject;
+  client?: Client;
+  stages: SiteProjectStage[];
+  history: SiteProjectHistoryEvent[];
+  criticalQa: SiteProjectQaItem[];
+  scores: SiteProjectScore[];
+  filesCount: number;
+  progressPercent: number;
+};
+
+export type CreateSiteProjectBundleInput = {
+  client: Pick<ClientInsert, "name"> & Partial<Pick<ClientInsert,
+    "company" | "segment" | "city_region" | "site_url" | "instagram" | "whatsapp" | "email"
+  >>;
+  project: CreateSiteProjectInput & Partial<Pick<SiteProjectInsert,
+    "business_description" | "main_offer" | "priority_audience" | "primary_goal" |
+    "primary_cta" | "platform_other"
+  >>;
 };
 
 export type StageDataUpdate = {

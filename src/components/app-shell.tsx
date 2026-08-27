@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useCrm } from "@/hooks/use-crm";
-import { useAuth } from "@/components/auth/auth-provider";
 import { orderLeads } from "@/lib/leads/ordering";
 import { normalizePhone } from "@/lib/leads/normalize-phone";
 import type { StatusFilter } from "@/components/dashboard/filters";
@@ -20,7 +19,7 @@ import { LocalMigrationDialog } from "@/components/migration/local-migration-dia
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export function AppShell() {
-  const crm = useCrm(); const { user, signOut } = useAuth();
+  const crm = useCrm();
   const [importOpen, setImportOpen] = useState(false); const [newOpen, setNewOpen] = useState(false); const [editOpen, setEditOpen] = useState(false);
   const [deletedOpen, setDeletedOpen] = useState(false); const [migrationOpen, setMigrationOpen] = useState(false); const [deleteConfirm, setDeleteConfirm] = useState(false); const [revertConfirm, setRevertConfirm] = useState(false);
   const [status, setStatusFilter] = useState<StatusFilter>("novo"); const [segment, setSegment] = useState(""); const [priority, setPriority] = useState(""); const [query, setQuery] = useState("");
@@ -31,7 +30,7 @@ export function AppShell() {
   })); }, [crm.leads, priority, query, segment, status]);
   if (!crm.ready) return <div className="loading-screen"><div className="brand-mark">S</div><p>Carregando seus leads...</p></div>;
   return <div className="app-shell">
-    <AppHeader userEmail={user?.email} deletedCount={crm.deletedLeads.length} onNewLead={() => setNewOpen(true)} onImport={() => setImportOpen(true)} onExport={crm.exportBackup} onRestore={crm.restoreBackup} onDeleted={() => setDeletedOpen(true)} onMigrate={() => setMigrationOpen(true)} onLogout={signOut} />
+    <AppHeader deletedCount={crm.deletedLeads.length} onNewLead={() => setNewOpen(true)} onImport={() => setImportOpen(true)} onExport={crm.exportBackup} onRestore={crm.restoreBackup} onDeleted={() => setDeletedOpen(true)} onMigrate={() => setMigrationOpen(true)} />
     <main className="dashboard"><div className="dashboard-heading"><div><p className="eyebrow">CENTRAL DE PROSPECÇÃO</p><h1>Visão geral</h1><p>Priorize oportunidades e mantenha seu ritmo comercial.</p></div><div className="today"><span>Hoje</span><strong>{new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</strong></div></div>
       <MetricsGrid leads={crm.leads} /><div className="dashboard-row"><DailyGoal leads={crm.leads} settings={crm.settings} onChange={(value) => void crm.updateDailyGoal(value)} /><Followups leads={crm.leads} onSelect={crm.selectLead} /></div>
       <Filters status={status} segment={segment} priority={priority} query={query} segments={segments} onStatus={setStatusFilter} onSegment={setSegment} onPriority={setPriority} onQuery={setQuery} />

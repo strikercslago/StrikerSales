@@ -3,10 +3,15 @@ import { SITE_PROJECT_ALLOWED_MIME_TYPES, SITE_PROJECT_BUCKET, SITE_PROJECT_MAX_
 import { DEVELOPMENT_GATE_PREREQUISITES, STRIKER_METHODOLOGY_VERSION, isSiteProjectStageKey } from "./methodology";
 import { SITE_PROJECT_STAGE_KEYS } from "@/types/site-project";
 
-describe("Arquivo Striker v1.0", () => {
+describe("Arquivo Striker v1.1", () => {
   it("mantém as 19 etapas oficiais ordenadas e sem duplicação", () => {
-    expect(STRIKER_METHODOLOGY_VERSION).toBe("1.0");
-    expect(SITE_PROJECT_STAGE_KEYS).toHaveLength(19);
+    expect(STRIKER_METHODOLOGY_VERSION).toBe("1.1");
+    expect(SITE_PROJECT_STAGE_KEYS).toEqual([
+      "discovery", "research", "strategy", "architecture", "visual_direction",
+      "design_system", "wireframe", "high_fidelity", "assets", "development",
+      "motion", "responsive", "accessibility", "performance", "seo", "qa_visual",
+      "qa_functional", "publication", "delivery",
+    ]);
     expect(new Set(SITE_PROJECT_STAGE_KEYS).size).toBe(19);
     expect(SITE_PROJECT_STAGE_KEYS[0]).toBe("discovery");
     expect(SITE_PROJECT_STAGE_KEYS.at(-1)).toBe("delivery");

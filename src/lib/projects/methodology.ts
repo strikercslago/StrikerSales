@@ -1,6 +1,6 @@
 import { SITE_PROJECT_STAGE_KEYS, type SiteProjectStageKey } from "@/types/site-project";
 
-export const STRIKER_METHODOLOGY_VERSION = "1.0" as const;
+export const STRIKER_METHODOLOGY_VERSION = "1.1" as const;
 
 export const DEVELOPMENT_GATE_PREREQUISITES = [
   "strategy",

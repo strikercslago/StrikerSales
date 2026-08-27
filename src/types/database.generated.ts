@@ -1648,6 +1648,7 @@ export type Database = {
       }
     }
     Functions: {
+      active_site_methodology_version: { Args: never; Returns: string }
       can_access_site_project_object: {
         Args: { p_object_name: string; p_write?: boolean }
         Returns: boolean
