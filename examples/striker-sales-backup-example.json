@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "exportedAt": "2026-08-25T12:00:00.000Z",
+  "leads": [
+    {
+      "id": "backup-example-001",
+      "externalId": "restored-001",
+      "name": "Lead Restaurado",
+      "businessName": "Empresa de Backup",
+      "segment": "Serviços",
+      "city": "Passo Fundo",
+      "state": "RS",
+      "phone": "5554999994242",
+      "score": 88,
+      "reviewCount": 51,
+      "priority": "alta",
+      "pain": "Exemplo restaurado para validar a recuperação dos dados.",
+      "opportunity": "Confirmar a continuidade do trabalho após perda do armazenamento local.",
+      "message": "Esta mensagem foi recuperada de um backup.",
+      "followupMessage": "Este follow-up também foi recuperado.",
+      "notes": "Configurações, mensagens e histórico fazem parte do backup.",
+      "status": "followup",
+      "followupAt": "2026-08-24T12:00:00.000Z",
+      "createdAt": "2026-08-20T12:00:00.000Z",
+      "updatedAt": "2026-08-24T12:00:00.000Z",
+      "history": [
+        { "id": "event-001", "type": "lead_imported", "timestamp": "2026-08-20T12:00:00.000Z", "data": { "source": "backup" } },
+        { "id": "event-002", "type": "status_changed", "timestamp": "2026-08-24T12:00:00.000Z", "data": { "from": "novo", "to": "followup" } }
+      ],
+      "extra": { "backup_fixture": true }
+    }
+  ],
+  "settings": {
+    "dailyGoal": { "target": 21, "date": "2026-08-25" }
+  }
+}

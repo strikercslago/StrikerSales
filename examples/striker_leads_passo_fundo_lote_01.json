@@ -1,0 +1,63 @@
+{
+  "schema": "striker-leads",
+  "schema_version": "1.0",
+  "batch": {
+    "name": "Passo Fundo — lote 01",
+    "created_at": "2026-08-25T12:00:00.000Z",
+    "lead_count": 3
+  },
+  "leads": [
+    {
+      "id": "pf-001",
+      "name": "Clínica Horizonte",
+      "business_name": "Horizonte Odontologia",
+      "segment": "Odontologia",
+      "city": "Passo Fundo",
+      "state": "RS",
+      "phone": "(54) 99999-1001",
+      "rating": 4.8,
+      "review_count": 146,
+      "score": 92,
+      "priority": "alta",
+      "pain": "Boa reputação local, mas presença digital pouco orientada à conversão.",
+      "opportunity": "Criar uma jornada mais direta para captação de avaliações e agendamentos.",
+      "message": "Olá! Analisei a presença digital da Horizonte e encontrei uma oportunidade de transformar a excelente reputação de vocês em mais agendamentos. Posso compartilhar a ideia?",
+      "followup_message": "Olá! Passando para saber se conseguiu ver minha mensagem anterior.",
+      "website_status": "desatualizado",
+      "instagram_status": "ativo",
+      "source": "prospecção local",
+      "maps_search_url": "https://www.google.com/maps/search/?api=1&query=odontologia+passo+fundo"
+    },
+    {
+      "id": "pf-002",
+      "name": "Studio Aurora",
+      "segment": "Estética",
+      "city": "Passo Fundo",
+      "state": "RS",
+      "phone": "54988881002",
+      "rating": 4.7,
+      "review_count": 89,
+      "score": 84,
+      "priority": "media",
+      "pain": "Comunicação visual consistente, porém sem chamada clara para agendamento.",
+      "opportunity": "Otimizar os pontos de contato e a abordagem comercial.",
+      "message": "Olá! Vi o trabalho do Studio Aurora e notei uma oportunidade simples para facilitar novos agendamentos. Posso enviar uma análise rápida?"
+    },
+    {
+      "id": "pf-003",
+      "name": "Bistrô da Praça",
+      "segment": "Restaurante",
+      "city": "Passo Fundo",
+      "state": "RS",
+      "whatsapp_url": "https://wa.me/5554999991003",
+      "rating": 4.6,
+      "review_count": 212,
+      "score": 78,
+      "priority": "baixa",
+      "pain": "Volume alto de avaliações sem aproveitamento em campanhas locais.",
+      "opportunity": "Transformar prova social em recorrência e novas visitas.",
+      "message": "Olá! Encontrei uma forma de aproveitar melhor as ótimas avaliações do Bistrô da Praça para atrair novas visitas. Posso explicar em dois minutos?",
+      "campo_futuro_preservado": "Este dado será mantido em extra"
+    }
+  ]
+}
