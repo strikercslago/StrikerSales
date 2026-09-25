@@ -81,6 +81,6 @@ export function validateLeadBatch(input: unknown, existing: Lead[] = []): LeadIm
     try { valid.push(mapLead(row, index)); }
     catch (error) { errors.push({ index, message: error instanceof Error ? error.message : "Lead inválido." }); }
   });
-  const { unique, duplicates } = deduplicateLeads(valid, existing);
+  const { unique, duplicates } = deduplicateLeads(valid, existing.filter((lead) => !lead.deletedAt));
   return { found: batch.leads.length, newLeads: unique, duplicates, errors, batch: batch.batch, batchExtra: batch.extra };
 }

@@ -28,7 +28,7 @@ export function ImportDialog({ open, existing, importing, onClose, onImport }: {
       {error && <p className="error-box">{error}</p>}
       {result && <div className="import-preview">
         <div className="preview-stats"><div><strong>{result.found}</strong><span>encontrados</span></div><div className="positive"><strong>{result.newLeads.length}</strong><span>novos</span></div><div className="warning"><strong>{result.duplicates.length}</strong><span>duplicados</span></div><div className={result.errors.length ? "danger" : ""}><strong>{result.errors.length}</strong><span>erros</span></div></div>
-        {result.duplicates.length > 0 && <p className="notice">Duplicados foram identificados e não serão importados. {result.duplicates.filter((lead) => lead.deletedAt).length > 0 ? `${result.duplicates.filter((lead) => lead.deletedAt).length} correspondem a leads excluídos e podem ser restaurados na área Excluídos.` : ""}</p>}
+        {result.duplicates.length > 0 && <p className="notice">Leads já ativos foram identificados e não serão importados novamente.</p>}
         {result.errors.length > 0 && <details><summary>Ver erros</summary><ul>{result.errors.map((item) => <li key={item.index}>Lead {item.index + 1}: {item.message}</li>)}</ul></details>}
       </div>}
       <footer><button className="secondary-button" onClick={onClose}>Cancelar</button>{result && <button className="primary-button" disabled={!result.newLeads.length || importing} onClick={() => void finish()}>{importing ? "Importando..." : `Importar ${result.newLeads.length} leads`}</button>}</footer>

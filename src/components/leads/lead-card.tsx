@@ -1,9 +1,10 @@
 import type { Lead } from "@/types/lead";
 import { ArrowIcon } from "@/components/ui/icons";
 
-export function LeadCard({ lead, selected, onSelect, onSkip }: { lead: Lead; selected: boolean; onSelect: () => void; onSkip: () => void }) {
+export function LeadCard({ lead, selected, onSelect, onSkip, checked = false, selectionDisabled, onToggleChecked }: { lead: Lead; selected: boolean; onSelect: () => void; onSkip: () => void; checked?: boolean; selectionDisabled?: boolean; onToggleChecked?: () => void }) {
   const approachedTime = lead.approachedAt ? new Date(lead.approachedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : undefined;
-  return <article className={`lead-card ${lead.status === "abordado" ? "approached" : ""} ${selected ? "selected" : ""}`}>
+  return <article className={`lead-card ${lead.status === "abordado" ? "approached" : ""} ${selected ? "selected" : ""} ${checked ? "bulk-selected" : ""}`}>
+    {onToggleChecked && <label className="lead-selection"><input type="checkbox" checked={checked} disabled={selectionDisabled} onChange={onToggleChecked} aria-label={`Selecionar ${lead.name}`} /><span>Selecionar</span></label>}
     <button className="card-main" onClick={onSelect}>
       <div className="lead-card-top"><span className={`priority ${lead.priority}`}>{lead.priority}</span><span className="score">{lead.score ?? "—"} <small>SCORE</small></span></div>
       <h3>{lead.name}</h3><p className="lead-meta">{[lead.segment, lead.city].filter(Boolean).join(" · ") || "Sem classificação"}</p>

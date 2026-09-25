@@ -55,6 +55,24 @@ export function useCrm() {
 
   const editLead = useCallback(async (id: string, changes: LeadChanges) => execute("edit", async () => { const updated = await repo().updateLead(id, changes); replaceLead(updated); return updated; }, "Lead atualizado."), [execute, replaceLead]);
   const softDeleteLead = useCallback(async (id: string) => execute("delete", async () => { const updated = await repo().softDeleteLead(id); replaceLead(updated); setSelectedId(undefined); return updated; }, "Lead movido para Excluídos."), [execute, replaceLead]);
+  const softDeleteLeads = useCallback(async (ids: string[]) => execute("bulk-delete", async () => {
+    const targets = [...new Set(ids)].filter((id) => allLeads.some((lead) => lead.id === id && !lead.deletedAt));
+    let completed = 0;
+    try {
+      for (const id of targets) {
+        const updated = await repo().softDeleteLead(id);
+        replaceLead(updated);
+        setSelectedId((current) => current === id ? undefined : current);
+        completed += 1;
+      }
+    } catch (error) {
+      // Reconcile mutations that may have succeeded before a history/network failure.
+      await refresh().catch(() => undefined);
+      throw new Error("Exclusão interrompida após " + completed + " de " + targets.length + " leads. Confira a fila e tente novamente. " + (error instanceof Error ? error.message : ""));
+    }
+    return completed;
+  }, "Leads selecionados movidos para Excluídos. Você pode importá-los novamente."), [allLeads, execute, refresh, replaceLead]);
+
   const restoreLead = useCallback(async (id: string) => execute(`restore:${id}`, async () => { const updated = await repo().restoreLead(id); replaceLead(updated); return updated; }, "Lead restaurado."), [execute, replaceLead]);
   const permanentlyDeleteLead = useCallback(async (id: string) => execute(`permanent:${id}`, async () => { await repo().permanentlyDeleteLead(id); setAllLeads((current) => current.filter((lead) => lead.id !== id)); }, "Lead excluído permanentemente."), [execute]);
 
@@ -87,5 +105,5 @@ export function useCrm() {
   const leads = useMemo(() => allLeads.filter((lead) => !lead.deletedAt), [allLeads]);
   const deletedLeads = useMemo(() => allLeads.filter((lead) => lead.deletedAt), [allLeads]);
   const selectedLead = useMemo(() => leads.find((lead) => lead.id === selectedId), [leads, selectedId]);
-  return { ready, busy, feedback, leads, allLeads, deletedLeads, settings, selectedId, selectedLead, selectLead: setSelectedId, importLeads, createLead, editLead, softDeleteLead, restoreLead, permanentlyDeleteLead, saveMessage, setStatus, startApproach, revertApproach, setFollowup, updateDailyGoal, exportBackup, restoreBackup, getLocalMigrationPreview, migrateLocalData };
+  return { ready, busy, feedback, leads, allLeads, deletedLeads, settings, selectedId, selectedLead, selectLead: setSelectedId, importLeads, createLead, editLead, softDeleteLead, softDeleteLeads, restoreLead, permanentlyDeleteLead, saveMessage, setStatus, startApproach, revertApproach, setFollowup, updateDailyGoal, exportBackup, restoreBackup, getLocalMigrationPreview, migrateLocalData };
 }
