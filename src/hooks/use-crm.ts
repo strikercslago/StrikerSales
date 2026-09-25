@@ -81,8 +81,8 @@ export function useCrm() {
 
   const startApproach = useCallback(async (id: string, message: string) => execute(`approach:${id}`, async () => {
     const updated = await repo().markApproached(id, message); const changed = allLeads.map((lead) => lead.id === id ? updated : lead); setAllLeads(changed);
-    setSelectedId(orderLeads(changed.filter((lead) => lead.status === "novo" && !lead.deletedAt))[0]?.id); return updated;
-  }, "Abordagem registrada. Próximo lead selecionado."), [allLeads, execute]);
+    return updated;
+  }, "WhatsApp aberto. A abordagem foi registrada; envie a mensagem no WhatsApp."), [allLeads, execute]);
 
   const revertApproach = useCallback(async (id: string) => execute(`revert-approach:${id}`, async () => {
     const updated = await repo().revertApproach(id); replaceLead(updated); setSelectedId(id); return updated;

@@ -9,10 +9,17 @@ export function AppWallpaper() {
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 900px)");
     const syncPlayback = () => {
-      if (preference.matches) video.pause();
-      else void video.play().catch(() => setPaused(true));
+      if (preference.matches) {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+        setPaused(true);
+      } else {
+        video.src = "/media/app-wallpaper.mp4";
+        void video.play().catch(() => setPaused(true));
+      }
     };
     syncPlayback();
     preference.addEventListener("change", syncPlayback);
@@ -22,7 +29,10 @@ export function AppWallpaper() {
   const togglePlayback = () => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) void video.play().catch(() => setPaused(true));
+    if (video.paused) {
+      if (!video.getAttribute("src")) video.src = "/media/app-wallpaper.mp4";
+      void video.play().catch(() => setPaused(true));
+    }
     else video.pause();
   };
 
@@ -31,11 +41,10 @@ export function AppWallpaper() {
       <video
         ref={videoRef}
         className="app-wallpaper-video"
-        src="/media/app-wallpaper.mp4"
         muted
         loop
         playsInline
-        preload="auto"
+        preload="none"
         tabIndex={-1}
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}

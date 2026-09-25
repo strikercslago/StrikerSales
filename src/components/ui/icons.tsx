@@ -11,3 +11,5 @@ export const ArrowIcon = (p: Props) => <Icon {...p}><path d="M5 12h14m-5-5 5 5-5
 export const MapIcon = (p: Props) => <Icon {...p}><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2" /></Icon>;
 export const MoreIcon = (p: Props) => <Icon {...p}><circle cx="5" cy="12" r="1" fill="currentColor" /><circle cx="12" cy="12" r="1" fill="currentColor" /><circle cx="19" cy="12" r="1" fill="currentColor" /></Icon>;
 export const BackupIcon = (p: Props) => <Icon {...p}><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" /></Icon>;
+export const LeadsIcon = (p: Props) => <Icon {...p}><circle cx="9" cy="7" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v3" /></Icon>;
+export const ProjectsIcon = (p: Props) => <Icon {...p}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 5V3h8v2M3 11h18M10 11v3h4v-3" /></Icon>;

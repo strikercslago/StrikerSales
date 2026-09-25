@@ -84,8 +84,9 @@ export function ProjectListPage() {
       <div><span>Metodologia atual</span><strong>Striker 1.1</strong></div>
     </section>
 
-    <div className="project-filter-row" role="tablist" aria-label="Filtros de projetos">
-      {filters.map((item) => <button key={item.key} className={filter === item.key ? "active" : ""} type="button" onClick={() => setFilter(item.key)}>{item.label}</button>)}
+    <label className="mobile-project-filter">Mostrar<select value={filter} onChange={(event) => setFilter(event.target.value as ProjectFilter)}>{filters.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}</select></label>
+    <div className="project-filter-row" role="group" aria-label="Filtros de projetos">
+      {filters.map((item) => <button key={item.key} aria-pressed={filter === item.key} className={filter === item.key ? "active" : ""} type="button" onClick={() => setFilter(item.key)}>{item.label}</button>)}
     </div>
 
     {loading && <ProjectLoading />}

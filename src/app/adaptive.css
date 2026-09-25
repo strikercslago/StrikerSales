@@ -1,0 +1,66 @@
+/* Shared controls and dialogs, including the signed-out screen. */
+:root { --mobile-nav-height: 68px; }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+button:disabled { cursor: not-allowed; }
+input, textarea, select { min-width: 0; }
+.native-modal { margin: 0; border: 0; color: var(--text); width: 100%; max-width: none; height: 100%; height: 100dvh; max-height: none; }
+.native-modal:not([open]) { display: none; }
+.native-modal::backdrop { background: transparent; }
+.native-modal .modal { max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior: contain; min-width: 0; }
+.native-modal header { gap: 12px; }
+.native-modal header > div { min-width: 0; }
+.native-modal .icon-button { flex-shrink: 0; }
+.native-modal .lead-form-modal { display: flex; flex-direction: column; overflow: hidden; }
+.native-modal .form-scroll { min-height: 0; }
+.native-modal .modal footer { flex-shrink: 0; }
+.native-modal .modal :is(p, strong, li) { overflow-wrap: anywhere; }
+.action-sheet-list { display: grid; margin-top: 20px; }
+.action-sheet-list button { padding: 16px 4px; text-align: left; border-bottom: 1px solid var(--line); }
+.action-sheet-list button:last-child { border-bottom: 0; }
+.action-sheet-list strong, .action-sheet-list span { display: block; }
+.action-sheet-list strong { font-size: 15px; }
+.action-sheet-list span { color: var(--muted); font-size: 12px; line-height: 1.5; margin-top: 5px; }
+.action-sheet-list button:hover { background: var(--surface-2); }
+.account-email { color: var(--muted); overflow-wrap: anywhere; }
+.toast { z-index: 110; max-width: min(440px, calc(100vw - 32px)); line-height: 1.5; }
+.toast button { margin-left: 12px; }
+
+@media (max-width: 900px) {
+  body { -webkit-text-size-adjust: 100%; }
+  button, a, input, select, textarea { touch-action: manipulation; }
+  :is(input:not([type=checkbox]), select, textarea) { font-size: 16px !important; }
+  .primary-button, .secondary-button, .danger-button, .icon-button { min-height: 44px; }
+  .icon-button { min-width: 44px; }
+  .native-modal { padding: 12px; padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+  .native-modal .modal { padding: 20px; max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); border-radius: 18px; }
+  .native-modal .modal h2 { font-size: 21px; line-height: 1.25; }
+  .native-modal .modal footer { gap: 10px; flex-wrap: wrap; }
+  .native-modal .modal footer button { flex: 1; padding: 12px; }
+  .native-modal .form-scroll { max-height: none; margin-top: 16px; }
+  .native-modal .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .native-modal .lead-form-modal footer { margin: 12px -20px 0; padding: 16px 20px; }
+  .native-modal .lead-form-modal label { font-size: 13px; }
+  .native-modal .lead-form-modal :is(input, select) { min-height: 48px; }
+  .native-modal .deleted-list { max-height: none; }
+  .native-modal .deleted-list article { flex-wrap: wrap; }
+  .native-modal .deleted-list article > div { flex-basis: 100%; min-width: 0; }
+  .native-modal .deleted-list button { min-height: 44px; font-size: 12px; }
+  .native-modal .deleted-list strong { font-size: 15px; }
+  .native-modal .deleted-list :is(span, small) { font-size: 12px; }
+  .native-modal .preview-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .native-modal .preview-stats span, .native-modal .selected-file, .native-modal .notice, .native-modal .error-box, .native-modal .import-preview details { font-size: 13px; }
+  .native-modal .dropzone { height: 160px; padding: 16px; }
+  .native-modal .dropzone strong { font-size: 15px; }
+  .native-modal .dropzone span { font-size: 12px; }
+  .toast { top: auto; bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 12px); left: 16px; right: 16px; max-width: none; font-size: 13px; }
+  .login-screen { min-height: 100dvh; padding: 28px 16px; }
+  .login-screen .login-card { padding: 28px 24px; }
+  .login-screen .login-brand { margin-bottom: 28px; }
+  .login-screen .login-copy h1 { font-size: clamp(24px, 6.5vw, 28px); }
+  .login-screen :is(label, .login-copy > p:last-child) { font-size: 14px; }
+  .login-screen input { min-height: 50px; }
+  .login-screen .primary-button { min-height: 50px; font-size: 15px; }
+  .login-screen .login-card > small { font-size: 12px; }
+  .login-screen .wallpaper-toggle { display: none; }
+  .login-wallpaper video { display: none; }
+}
