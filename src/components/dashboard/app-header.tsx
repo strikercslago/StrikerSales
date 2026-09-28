@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { UploadIcon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/modal";
 
-export function AppHeader({ deletedCount, onNewLead, onImport, onExport, onRestore, onDeleted, onMigrate }: { deletedCount: number; onNewLead: () => void; onImport: () => void; onExport: () => void; onRestore: (file: File) => Promise<unknown>; onDeleted: () => void; onMigrate: () => void }) {
+export function AppHeader({ deletedCount, onNewLead, onImport, onReviewApproaches, onExport, onRestore, onDeleted, onMigrate }: { deletedCount: number; onNewLead: () => void; onImport: () => void; onReviewApproaches: () => void; onExport: () => void; onRestore: (file: File) => Promise<unknown>; onDeleted: () => void; onMigrate: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [notice, setNotice] = useState<string>();
@@ -21,6 +21,7 @@ export function AppHeader({ deletedCount, onNewLead, onImport, onExport, onResto
     <div className="brand"><div><strong>STRIKER <span>SALES</span></strong><p>Central de prospecção</p></div></div>
     <div className="header-actions">
       <button className="secondary-button desktop-import" onClick={onImport}><UploadIcon /> Importar</button>
+      <button className="secondary-button desktop-review" onClick={onReviewApproaches}>Revisar abordagens</button>
       <button className="primary-button" onClick={onNewLead}>+ Novo lead</button>
       <button className="secondary-button" aria-haspopup="dialog" onClick={() => { setNotice(undefined); setMenuOpen(true); }}>Mais</button>
     </div>
@@ -28,6 +29,7 @@ export function AppHeader({ deletedCount, onNewLead, onImport, onExport, onResto
       <section className="modal action-sheet"><header><div><p className="eyebrow">ORGANIZAR SUA BASE</p><h2>Ferramentas de leads</h2></div><button className="icon-button" aria-label="Fechar ferramentas" disabled={restoring} onClick={() => setMenuOpen(false)}>×</button></header>
         <div className="action-sheet-list">
           <button disabled={restoring} onClick={() => run(onImport)}><strong>Importar leads</strong><span>Adicionar contatos de um arquivo JSON</span></button>
+          <button disabled={restoring} onClick={() => run(onReviewApproaches)}><strong>Revisar abordagens</strong><span>Exportar mensagens e aplicar correções do ChatGPT</span></button>
           <button disabled={restoring} onClick={() => run(onDeleted)}><strong>Excluídos ({deletedCount})</strong><span>Consultar e restaurar contatos</span></button>
           <button disabled={restoring} onClick={() => run(onExport)}><strong>Exportar backup</strong><span>Salvar uma cópia dos seus dados</span></button>
           <button disabled={restoring} onClick={() => restoreRef.current?.click()}><strong>{restoring ? "Restaurando..." : "Restaurar backup"}</strong><span>Mesclar os dados de um backup existente</span></button>

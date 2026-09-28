@@ -5,6 +5,7 @@ Ordem das migrations:
 1. `202608250001_create_crm_schema.sql`: tabelas e relacionamentos.
 2. `202608250002_add_constraints_indexes_triggers.sql`: validações, índices e `updated_at`.
 3. `202608250003_enable_rls_and_policies.sql`: grants mínimos e RLS por proprietário.
+4. Execute também as migrations posteriores em ordem de nome. Para a Central de Prospecção, `202609280001_prospecting_import_idempotency.sql` impede que o mesmo resultado de busca seja importado simultaneamente mais de uma vez.
 
 ## Modelo de segurança
 

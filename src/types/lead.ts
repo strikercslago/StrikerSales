@@ -27,7 +27,8 @@ export type LeadEventType =
   | "proposal_created"
   | "lead_won"
   | "lead_deleted"
-  | "lead_restored";
+  | "lead_restored"
+  | "validation_resolved";
 
 export interface LeadHistoryEvent {
   id: string;

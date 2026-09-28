@@ -1,10 +1,13 @@
 import type { CrmSettings, CrmSnapshot, Lead, LeadChanges, LeadDraft, LeadEventType, LeadStatus } from "@/types/lead";
 import type { LeadImportResult } from "@/types/lead-import";
+import type { ApproachReviewApplyReport, ApproachReviewItem } from "@/types/approach-review";
+import type { BulkSenderExportRecord, BulkSenderExportSnapshot, BulkSenderSaveResult } from "@/types/bulk-sender";
 import type { LeadFilters, LeadRepository, LeadScope, MigrationPreview, MigrationReport } from "@/types/repository";
 import { deduplicateLeads } from "@/lib/leads/deduplication";
 import { normalizePhone, phoneFromWhatsAppUrl } from "@/lib/leads/normalize-phone";
 
 const STORAGE_KEY = "striker-sales:crm:v1";
+const BULK_EXPORTS_KEY = "striker-sales:bulk-sender-exports:v1";
 const today = () => new Date().toISOString().slice(0, 10);
 
 export const defaultSettings = (): CrmSettings => ({ dailyGoal: { target: 15, date: today() } });
@@ -114,7 +117,34 @@ export class LocalLeadRepository implements LeadRepository {
   async scheduleFollowup(id: string, followupAt?: string) { await this.updateLead(id, { followupAt, ...(followupAt ? { status: "followup" as const } : {}) }); return this.recordEvent(id, "followup_scheduled", { followupAt: followupAt ?? null }); }
   async searchLeads(query: string, filters: LeadFilters = {}) { const leads = await this.getLeads(filters.scope); const needle = query.toLowerCase(); return leads.filter((lead) => (!filters.status || lead.status === filters.status) && (!filters.segment || lead.segment === filters.segment) && (!filters.priority || lead.priority === filters.priority) && (!needle || lead.name.toLowerCase().includes(needle) || lead.businessName?.toLowerCase().includes(needle) || lead.normalizedPhone?.includes(query.replace(/\D/g, "")))); }
   async getHistory(leadId: string) { return (await this.getLeadById(leadId))?.history ?? []; }
-  async importBatch(result: LeadImportResult) { const snapshot = await this.load(); await this.saveLeads([...snapshot.leads, ...result.newLeads]); return result.newLeads; }
+  async importBatch(result: LeadImportResult) { const snapshot = await this.load(); const { unique } = deduplicateLeads(result.newLeads, snapshot.leads); await this.saveLeads([...snapshot.leads, ...unique]); return unique; }
+  async applyApproachReviews(reviews: ApproachReviewItem[]): Promise<ApproachReviewApplyReport> {
+    const snapshot = await this.load(); const byId = new Map(reviews.map((review) => [review.leadId, review])); const updatedLeadIds: string[] = [];
+    const leads = snapshot.leads.map((lead) => {
+      const review = byId.get(lead.id);
+      if (!review || lead.deletedAt || lead.status !== "novo" || lead.approachedAt || lead.updatedAt !== review.expectedUpdatedAt) return lead;
+      updatedLeadIds.push(lead.id); const updatedAt = new Date().toISOString();
+      return { ...lead, message: review.message, followupMessage: review.followupMessage, updatedAt, history: [...lead.history, event("message_edited", { source: "approach_review", rationale: review.rationale })] };
+    });
+    await this.saveLeads(leads);
+    return { updated: updatedLeadIds.length, skipped: reviews.length - updatedLeadIds.length, updatedLeadIds };
+  }
+  async getBulkSenderExports(): Promise<BulkSenderExportSnapshot[]> {
+    try { const value = JSON.parse(localStorage.getItem(BULK_EXPORTS_KEY) ?? "[]"); return Array.isArray(value) ? value : []; }
+    catch { return []; }
+  }
+  async saveBulkSenderExport(record: BulkSenderExportRecord): Promise<BulkSenderSaveResult> {
+    const current = await this.getBulkSenderExports(); const existing = current.find((item) => item.fingerprint === record.fingerprint);
+    if (existing) return { snapshot: existing, created: false };
+    const snapshot: BulkSenderExportSnapshot = { ...record, id: makeId(), createdAt: new Date().toISOString() };
+    localStorage.setItem(BULK_EXPORTS_KEY, JSON.stringify([snapshot, ...current])); return { snapshot, created: true };
+  }
+  async resolveLeadValidation(id: string) {
+    const lead = await this.getLeadById(id); if (!lead) throw new Error("Lead não encontrado.");
+    if (!lead.validationRequired) return lead;
+    const resolvedAt = new Date().toISOString(); await this.updateLead(id, { validationRequired: false });
+    return this.recordEvent(id, "validation_resolved", { resolvedAt, resolvedBy: "local-user" });
+  }
   async getDailyGoal() { return (await this.load()).settings.dailyGoal.target; }
   async setDailyGoal(target: number) { const snapshot = await this.load(); await this.saveSettings({ dailyGoal: { ...snapshot.settings.dailyGoal, target } }); }
   async previewMigration(snapshot: CrmSnapshot): Promise<MigrationPreview> { const { unique, duplicates } = deduplicateLeads(snapshot.leads, await this.getLeads("all")); return { found: snapshot.leads.length, newCount: unique.length, duplicateCount: duplicates.length, deletedDuplicates: duplicates.filter((lead) => Boolean(lead.deletedAt)) }; }

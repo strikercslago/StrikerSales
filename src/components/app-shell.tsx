@@ -15,6 +15,8 @@ import { LeadDetails } from "@/components/leads/lead-details";
 import { LeadFormDialog } from "@/components/leads/lead-form-dialog";
 import { DeletedLeadsDialog } from "@/components/leads/deleted-leads-dialog";
 import { ImportDialog } from "@/components/import/import-dialog";
+import { ApproachReviewDialog } from "@/components/leads/approach-review-dialog";
+import { BulkSenderExportDialog } from "@/components/leads/bulk-sender-export-dialog";
 import { LocalMigrationDialog } from "@/components/migration/local-migration-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Modal } from "@/components/ui/modal";
@@ -26,7 +28,8 @@ export function AppShell() {
   const mobile = useMobileLayout();
   const { detailOpen, openLead, closeLead } = useLeadNavigation(crm.selectLead);
   const [mobileView, setMobileView] = useState<"queue" | "overview">("queue");
-  const [importOpen, setImportOpen] = useState(false); const [newOpen, setNewOpen] = useState(false); const [editOpen, setEditOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false); const [reviewOpen, setReviewOpen] = useState(false); const [newOpen, setNewOpen] = useState(false); const [editOpen, setEditOpen] = useState(false);
+  const [bulkLeadIds, setBulkLeadIds] = useState<string[]>([]);
   const [deletedOpen, setDeletedOpen] = useState(false); const [migrationOpen, setMigrationOpen] = useState(false); const [deleteConfirm, setDeleteConfirm] = useState(false); const [revertConfirm, setRevertConfirm] = useState(false);
   const [status, setStatusFilter] = useState<StatusFilter>("novo"); const [segment, setSegment] = useState(""); const [priority, setPriority] = useState(""); const [query, setQuery] = useState("");
   useEffect(() => {
@@ -43,19 +46,21 @@ export function AppShell() {
   const details = <LeadDetails lead={crm.selectedLead} busy={Boolean(crm.busy)} onClose={closeLead} onEdit={() => setEditOpen(true)} onDelete={() => setDeleteConfirm(true)} onStartApproach={(message) => crm.startApproach(crm.selectedLead!.id, message)} onRevertApproach={() => setRevertConfirm(true)} onSaveMessage={(message) => crm.saveMessage(crm.selectedLead!.id, message)} onStatus={(nextStatus) => crm.setStatus(crm.selectedLead!.id, nextStatus)} onFollowup={(at) => crm.setFollowup(crm.selectedLead!.id, at)} onNext={nextLead ? () => openLead(nextLead.id) : undefined} />;
   if (!crm.ready) return <div className="loading-screen"><div className="brand-mark">S</div><p>Carregando seus leads...</p></div>;
   return <div className="app-shell">
-    <AppHeader deletedCount={crm.deletedLeads.length} onNewLead={() => setNewOpen(true)} onImport={() => setImportOpen(true)} onExport={crm.exportBackup} onRestore={crm.restoreBackup} onDeleted={() => setDeletedOpen(true)} onMigrate={() => setMigrationOpen(true)} />
+    <AppHeader deletedCount={crm.deletedLeads.length} onNewLead={() => setNewOpen(true)} onImport={() => setImportOpen(true)} onReviewApproaches={() => setReviewOpen(true)} onExport={crm.exportBackup} onRestore={crm.restoreBackup} onDeleted={() => setDeletedOpen(true)} onMigrate={() => setMigrationOpen(true)} />
     <main className={`dashboard mobile-view-${mobileView}`}>
       <div className="mobile-work-switch" aria-label="Área de trabalho"><button aria-pressed={mobileView === "queue"} onClick={() => setMobileView("queue")}>Fila de leads <span>{filtered.length}</span></button><button aria-pressed={mobileView === "overview"} onClick={() => setMobileView("overview")}>Resumo do dia</button></div>
       <section className="dashboard-overview" aria-label="Resumo do dia"><div className="dashboard-heading"><div><p className="eyebrow">CENTRAL DE PROSPECÇÃO</p><h1>Visão geral</h1><p>Priorize oportunidades e mantenha seu ritmo comercial.</p></div><div className="today"><span>Hoje</span><strong>{new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</strong></div></div>
       <MetricsGrid leads={crm.leads} /><div className="dashboard-row"><DailyGoal leads={crm.leads} settings={crm.settings} onChange={(value) => void crm.updateDailyGoal(value)} /><Followups leads={crm.leads} onSelect={openLead} /></div></section>
       <section className="dashboard-work" aria-label="Fila de leads">
       <Filters status={status} segment={segment} priority={priority} query={query} segments={segments} onStatus={setStatusFilter} onSegment={setSegment} onPriority={setPriority} onQuery={setQuery} />
-      <div className={`workspace ${crm.selectedLead ? "has-detail" : ""}`}><ProspectingQueue key={JSON.stringify([status, segment, priority, query])} busy={Boolean(crm.busy)} onDeleteMany={crm.softDeleteLeads} leads={filtered} selectedId={mobile && !detailOpen ? undefined : crm.selectedId} onSelect={openLead} onClearFilters={() => { setStatusFilter("todos"); setSegment(""); setPriority(""); setQuery(""); }} onNewLead={() => setNewOpen(true)} />{!mobile && details}</div>
+      <div className={`workspace ${crm.selectedLead ? "has-detail" : ""}`}><ProspectingQueue key={JSON.stringify([status, segment, priority, query])} busy={Boolean(crm.busy)} onDeleteMany={crm.softDeleteLeads} onBulkExport={(ids) => setBulkLeadIds(ids)} leads={filtered} selectedId={mobile && !detailOpen ? undefined : crm.selectedId} onSelect={openLead} onClearFilters={() => { setStatusFilter("todos"); setSegment(""); setPriority(""); setQuery(""); }} onNewLead={() => setNewOpen(true)} />{!mobile && details}</div>
       </section>
     </main>
     {mobile && <Modal open={detailOpen && Boolean(crm.selectedLead)} onClose={closeLead} label="Detalhes do lead" fullScreen>{details}{crm.feedback && <div role="status" className={`toast ${crm.feedback.type}`}>{crm.feedback.message}</div>}</Modal>}
     {crm.feedback && !(mobile && detailOpen) && <div role="status" className={`toast ${crm.feedback.type}`}>{crm.feedback.message}</div>}
     {importOpen && <ImportDialog open={importOpen} existing={crm.allLeads} importing={crm.busy === "import"} onClose={() => setImportOpen(false)} onImport={crm.importLeads} />}
+    {reviewOpen && <ApproachReviewDialog open={reviewOpen} leads={crm.allLeads} applying={crm.busy === "approach-review"} onClose={() => setReviewOpen(false)} onApply={crm.applyApproachReviews} />}
+    {bulkLeadIds.length > 0 && <BulkSenderExportDialog open leads={crm.allLeads.filter((lead) => bulkLeadIds.includes(lead.id))} busy={crm.busy === "bulk-sender-export" || crm.busy?.startsWith("validation:")} onClose={() => setBulkLeadIds([])} onLoadExports={crm.loadBulkSenderExports} onSaveExport={crm.saveBulkSenderExport} onResolveValidation={crm.resolveLeadValidation} />}
     <LeadFormDialog open={newOpen} saving={crm.busy === "create"} onClose={() => setNewOpen(false)} onSave={crm.createLead} />
     <LeadFormDialog open={editOpen} lead={crm.selectedLead} saving={crm.busy === "edit"} onClose={() => setEditOpen(false)} onSave={(draft) => crm.editLead(crm.selectedLead!.id, draft)} />
     <ConfirmDialog open={deleteConfirm} title="Excluir este lead?" message="Ele será movido para Excluídos e poderá ser restaurado posteriormente." confirmLabel="Excluir lead" danger busy={crm.busy === "delete"} onClose={() => setDeleteConfirm(false)} onConfirm={async () => { await crm.softDeleteLead(crm.selectedLead!.id); closeLead(); }} />

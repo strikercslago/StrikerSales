@@ -3,9 +3,9 @@ import type { Lead } from "@/types/lead";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LeadCard } from "./lead-card";
 
-export function ProspectingQueue({ leads, selectedId, onSelect, busy, onDeleteMany, onClearFilters, onNewLead }: {
+export function ProspectingQueue({ leads, selectedId, onSelect, busy, onDeleteMany, onBulkExport, onClearFilters, onNewLead }: {
   leads: Lead[]; selectedId?: string; onSelect: (id: string) => void; busy?: boolean;
-  onDeleteMany: (ids: string[]) => Promise<unknown>; onClearFilters: () => void; onNewLead: () => void;
+  onDeleteMany: (ids: string[]) => Promise<unknown>; onBulkExport: (ids: string[]) => void; onClearFilters: () => void; onNewLead: () => void;
 }) {
   const [selecting, setSelecting] = useState(false);
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
@@ -20,6 +20,7 @@ export function ProspectingQueue({ leads, selectedId, onSelect, busy, onDeleteMa
     {selecting && <div className="queue-bulk-actions">
       <label><input type="checkbox" checked={allChecked} ref={(element) => { if (element) element.indeterminate = selected.length > 0 && !allChecked; }} disabled={busy} onChange={() => setCheckedIds(allChecked ? [] : leads.map((lead) => lead.id))} /><span>Todos desta fila ({leads.length})</span></label>
       <span role="status">{selected.length} selecionados</span>
+      <button className="primary-button" disabled={busy || !selected.length} onClick={() => onBulkExport(selected)}>Exportar para Bulk Sender ({selected.length})</button>
       <button className="danger-button" disabled={busy || !selected.length} onClick={() => setConfirmation(selected)}>Excluir ({selected.length})</button>
     </div>}
     {leads.length ? <div className="queue-list">{leads.map((lead) => <LeadCard key={lead.id} lead={lead} selected={lead.id === selectedId} checked={selected.includes(lead.id)} selectionDisabled={busy} onToggleChecked={selecting ? () => toggle(lead.id) : undefined} onSelect={() => onSelect(lead.id)} />)}</div>

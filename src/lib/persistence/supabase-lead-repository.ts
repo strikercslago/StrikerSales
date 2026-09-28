@@ -1,13 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CrmSnapshot, Lead, LeadChanges, LeadDraft, LeadEventType, LeadHistoryEvent, LeadStatus } from "@/types/lead";
 import type { LeadImportResult } from "@/types/lead-import";
+import type { ApproachReviewApplyReport, ApproachReviewItem } from "@/types/approach-review";
+import type { BulkSenderExportRecord, BulkSenderExportSnapshot, BulkSenderSaveResult } from "@/types/bulk-sender";
 import type { LeadFilters, LeadRepository, LeadScope, MigrationPreview, MigrationReport } from "@/types/repository";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { deduplicateLeads } from "@/lib/leads/deduplication";
 import { mapHistoryRow, mapLeadRow, toLeadRow } from "./lead-mapper";
+import { BULK_SENDER_PROFILE } from "@/lib/bulk-sender/profile";
 
 type Row = Record<string, unknown>;
 const rows = (value: unknown) => Array.isArray(value) ? value as Row[] : [];
+const optionalString = (value: unknown) => typeof value === "string" ? value : undefined;
 
 export class SupabaseLeadRepository implements LeadRepository {
   constructor(private readonly client: SupabaseClient = getSupabaseClient()) {}
@@ -129,16 +133,69 @@ export class SupabaseLeadRepository implements LeadRepository {
 
   async importBatch(result: LeadImportResult) {
     const batch = result.batch ?? {}; const name = typeof batch.name === "string" ? batch.name : "Lote importado";
-    const { data: batchRow, error: batchError } = await this.client.from("lead_batches").insert({ name, schema_name: "striker-leads", schema_version: "1.0", source: typeof batch.source === "string" ? batch.source : null, original_lead_count: result.found, imported_lead_count: result.newLeads.length, duplicate_count: result.duplicates.length, error_count: result.errors.length, metadata: result.batchExtra }).select("id").single();
+    const searchId = typeof batch.prospecting_search_id === "string" ? batch.prospecting_search_id : undefined;
+    if (searchId) {
+      const { data: previous, error: previousError } = await this.client.from("lead_batches").select("id").contains("metadata", { prospectingSearchId: searchId }).maybeSingle();
+      if (previousError) throw new Error(`Não foi possível verificar a importação: ${previousError.message}`);
+      if (previous) throw new Error("O resultado desta busca já foi importado.");
+    }
+    const existing = await this.getLeads("all");
+    const { unique, duplicates: currentDuplicates } = deduplicateLeads(result.newLeads, existing);
+    const metadata = { ...result.batchExtra, ...(searchId ? { prospectingSearchId: searchId } : {}), campaignId: typeof batch.campaign_id === "string" ? batch.campaign_id : undefined, rejectedCandidates: result.rejectedCandidates };
+    const { data: batchRow, error: batchError } = await this.client.from("lead_batches").insert({ name, schema_name: "striker-leads", schema_version: "1.0", source: typeof batch.source === "string" ? batch.source : null, original_lead_count: result.found, imported_lead_count: unique.length, duplicate_count: result.duplicates.length + currentDuplicates.length, error_count: result.errors.length, metadata }).select("id").single();
     if (batchError) throw new Error(`Não foi possível criar o lote: ${batchError.message}`);
-    if (!result.newLeads.length) return [];
-    const payload = result.newLeads.map((lead) => ({ ...toLeadRow(lead), batch_id: (batchRow as Row).id }));
+    if (!unique.length) return [];
+    const payload = unique.map((lead) => ({ ...toLeadRow(lead), batch_id: (batchRow as Row).id }));
     const { data, error } = await this.client.from("leads").insert(payload).select("*");
     if (error) throw new Error(`Não foi possível importar os leads: ${error.message}`);
     const imported = rows(data).map(mapLeadRow);
     const { error: historyError } = await this.client.from("lead_history").insert(imported.map((lead) => ({ lead_id: lead.id, event_type: "lead_imported", metadata: { batchId: (batchRow as Row).id, source: lead.source } })));
     if (historyError) throw new Error(`Leads importados, mas o histórico falhou: ${historyError.message}`);
     return Promise.all(imported.map(async (lead) => (await this.getLeadById(lead.id)) ?? lead));
+  }
+
+  async applyApproachReviews(reviews: ApproachReviewItem[]): Promise<ApproachReviewApplyReport> {
+    const updatedLeadIds: string[] = [];
+    for (const review of reviews) {
+      const { data, error } = await this.client.from("leads").update({ message: review.message, followup_message: review.followupMessage ?? null })
+        .eq("id", review.leadId).eq("status", "novo").is("approached_at", null).is("deleted_at", null).eq("updated_at", review.expectedUpdatedAt).select("id");
+      if (error) throw new Error(`Não foi possível aplicar uma revisão: ${error.message}`);
+      if (!rows(data).length) continue;
+      updatedLeadIds.push(review.leadId);
+      await this.addHistory(review.leadId, "message_edited", undefined, { message: review.message, followupMessage: review.followupMessage ?? null }, { source: "approach_review", rationale: review.rationale });
+    }
+    return { updated: updatedLeadIds.length, skipped: reviews.length - updatedLeadIds.length, updatedLeadIds };
+  }
+
+  async getBulkSenderExports(): Promise<BulkSenderExportSnapshot[]> {
+    const { data, error } = await this.client.from("bulk_sender_exports").select("*").order("created_at", { ascending: false });
+    if (error) {
+      if (error.code === "PGRST205" || error.message.includes("bulk_sender_exports")) throw new Error("A estrutura do Bulk Sender ainda não foi instalada. Aplique a migration 202609280002 antes de exportar.");
+      throw new Error(`Não foi possível carregar os lotes do Bulk Sender: ${error.message}`);
+    }
+    return rows(data).map((row) => ({ ...(row.snapshot as BulkSenderExportSnapshot), id: String(row.id), createdAt: String(row.created_at), fingerprint: String(row.fingerprint), batchName: String(row.batch_name), campaign: optionalString(row.campaign), purpose: String(row.purpose) as BulkSenderExportSnapshot["purpose"], ...BULK_SENDER_PROFILE }));
+  }
+
+  async saveBulkSenderExport(record: BulkSenderExportRecord): Promise<BulkSenderSaveResult> {
+    const existing = await this.client.from("bulk_sender_exports").select("*").eq("fingerprint", record.fingerprint).maybeSingle();
+    if (existing.error) {
+      if (existing.error.code === "PGRST205" || existing.error.message.includes("bulk_sender_exports")) throw new Error("A estrutura do Bulk Sender ainda não foi instalada. Aplique a migration 202609280002 antes de exportar.");
+      throw new Error(`Não foi possível verificar exportações anteriores: ${existing.error.message}`);
+    }
+    if (existing.data) return { snapshot: (await this.getBulkSenderExports()).find((item) => item.id === String(existing.data.id))!, created: false };
+    const payload = { fingerprint: record.fingerprint, batch_name: record.batchName, campaign: record.campaign ?? null, purpose: record.purpose, profile_id: record.profileId, profile_version: record.profileVersion, snapshot: record };
+    const { data, error } = await this.client.from("bulk_sender_exports").insert(payload).select("*").single();
+    if (error) {
+      if (error.code === "23505") { const repeated = (await this.getBulkSenderExports()).find((item) => item.fingerprint === record.fingerprint); if (repeated) return { snapshot: repeated, created: false }; }
+      throw new Error(`Não foi possível registrar o lote: ${error.message}`);
+    }
+    return { snapshot: { ...record, id: String(data.id), createdAt: String(data.created_at) }, created: true };
+  }
+
+  async resolveLeadValidation(id: string) {
+    const { error } = await this.client.rpc("resolve_lead_validation", { p_lead_id: id });
+    if (error) throw new Error(`Não foi possível resolver a validação: ${error.message}`);
+    return (await this.getLeadById(id))!;
   }
 
   async getDailyGoal() {

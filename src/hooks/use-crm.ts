@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CrmSettings, CrmSnapshot, Lead, LeadChanges, LeadDraft, LeadStatus } from "@/types/lead";
 import type { LeadImportResult } from "@/types/lead-import";
 import type { MigrationPreview, MigrationReport } from "@/types/repository";
+import type { ApproachReviewItem } from "@/types/approach-review";
+import type { BulkSenderExportRecord } from "@/types/bulk-sender";
 import { LocalLeadRepository, defaultSettings } from "@/lib/persistence/local-lead-repository";
 import { SupabaseLeadRepository } from "@/lib/persistence/supabase-lead-repository";
 import { isDuplicate } from "@/lib/leads/deduplication";
@@ -45,6 +47,13 @@ export function useCrm() {
   const importLeads = useCallback(async (result: LeadImportResult) => {
     await execute("import", async () => { const imported = await repo().importBatch(result); setAllLeads((current) => [...current, ...imported]); if (!selectedId && imported[0]) setSelectedId(orderLeads(imported)[0].id); }, `${result.newLeads.length} leads importados.`);
   }, [execute, selectedId]);
+
+  const applyApproachReviews = useCallback(async (reviews: ApproachReviewItem[]) => execute("approach-review", async () => {
+    const report = await repo().applyApproachReviews(reviews); await refresh(); return report;
+  }, "Abordagens revisadas com segurança."), [execute, refresh]);
+  const loadBulkSenderExports = useCallback(() => repo().getBulkSenderExports(), []);
+  const saveBulkSenderExport = useCallback((record: BulkSenderExportRecord) => execute("bulk-sender-export", () => repo().saveBulkSenderExport(record)), [execute]);
+  const resolveLeadValidation = useCallback((id: string) => execute(`validation:${id}`, async () => { const updated = await repo().resolveLeadValidation(id); replaceLead(updated); return updated; }, "Validação resolvida e registrada no histórico."), [execute, replaceLead]);
 
   const createLead = useCallback(async (draft: LeadDraft) => {
     const candidate = { ...draft, id: "preview", name: draft.name || draft.businessName || "Lead", priority: draft.priority ?? "media", status: draft.status ?? "novo", message: draft.message ?? "", createdAt: "", updatedAt: "", history: [], extra: draft.extra ?? {} } as Lead;
@@ -105,5 +114,5 @@ export function useCrm() {
   const leads = useMemo(() => allLeads.filter((lead) => !lead.deletedAt), [allLeads]);
   const deletedLeads = useMemo(() => allLeads.filter((lead) => lead.deletedAt), [allLeads]);
   const selectedLead = useMemo(() => leads.find((lead) => lead.id === selectedId), [leads, selectedId]);
-  return { ready, busy, feedback, leads, allLeads, deletedLeads, settings, selectedId, selectedLead, selectLead: setSelectedId, importLeads, createLead, editLead, softDeleteLead, softDeleteLeads, restoreLead, permanentlyDeleteLead, saveMessage, setStatus, startApproach, revertApproach, setFollowup, updateDailyGoal, exportBackup, restoreBackup, getLocalMigrationPreview, migrateLocalData };
+  return { ready, busy, feedback, leads, allLeads, deletedLeads, settings, selectedId, selectedLead, selectLead: setSelectedId, importLeads, applyApproachReviews, loadBulkSenderExports, saveBulkSenderExport, resolveLeadValidation, createLead, editLead, softDeleteLead, softDeleteLeads, restoreLead, permanentlyDeleteLead, saveMessage, setStatus, startApproach, revertApproach, setFollowup, updateDailyGoal, exportBackup, restoreBackup, getLocalMigrationPreview, migrateLocalData };
 }

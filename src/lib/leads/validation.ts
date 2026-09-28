@@ -1,7 +1,8 @@
 import type { Lead, LeadPriority, LeadStatus } from "@/types/lead";
 import { LEAD_STATUSES } from "@/types/lead";
 import type { LeadBatch, LeadImportError, LeadImportResult } from "@/types/lead-import";
-import { deduplicateLeads } from "./deduplication";
+import { classifyLeads } from "./deduplication";
+import { sanitizeRejectedCandidate } from "@/lib/prospecting/prospecting";
 import { normalizePhone, phoneFromWhatsAppUrl } from "./normalize-phone";
 
 const knownFields = new Set([
@@ -81,6 +82,7 @@ export function validateLeadBatch(input: unknown, existing: Lead[] = []): LeadIm
     try { valid.push(mapLead(row, index)); }
     catch (error) { errors.push({ index, message: error instanceof Error ? error.message : "Lead inválido." }); }
   });
-  const { unique, duplicates } = deduplicateLeads(valid, existing.filter((lead) => !lead.deletedAt));
-  return { found: batch.leads.length, newLeads: unique, duplicates, errors, batch: batch.batch, batchExtra: batch.extra };
+  const { unique, duplicates, possibleDuplicates } = classifyLeads(valid, existing);
+  const rejectedCandidates = Array.isArray(root.rejected_candidates) ? root.rejected_candidates.map(sanitizeRejectedCandidate).filter((item): item is NonNullable<typeof item> => Boolean(item)) : [];
+  return { found: batch.leads.length, newLeads: unique, duplicates, possibleDuplicates, rejectedCandidates, errors, batch: batch.batch, batchExtra: batch.extra };
 }

@@ -1,5 +1,7 @@
 import type { CrmSnapshot, Lead, LeadChanges, LeadDraft, LeadHistoryEvent, LeadPriority, LeadStatus } from "./lead";
 import type { LeadImportResult } from "./lead-import";
+import type { ApproachReviewApplyReport, ApproachReviewItem } from "./approach-review";
+import type { BulkSenderExportRecord, BulkSenderExportSnapshot, BulkSenderSaveResult } from "./bulk-sender";
 
 export type LeadScope = "active" | "deleted" | "all";
 export interface LeadFilters { status?: LeadStatus; segment?: string; priority?: LeadPriority; scope?: LeadScope; }
@@ -22,6 +24,10 @@ export interface LeadRepository {
   searchLeads(query: string, filters?: LeadFilters): Promise<Lead[]>;
   getHistory(leadId: string): Promise<LeadHistoryEvent[]>;
   importBatch(result: LeadImportResult): Promise<Lead[]>;
+  applyApproachReviews(reviews: ApproachReviewItem[]): Promise<ApproachReviewApplyReport>;
+  getBulkSenderExports(): Promise<BulkSenderExportSnapshot[]>;
+  saveBulkSenderExport(record: BulkSenderExportRecord): Promise<BulkSenderSaveResult>;
+  resolveLeadValidation(id: string): Promise<Lead>;
   getDailyGoal(): Promise<number>;
   setDailyGoal(target: number): Promise<void>;
   previewMigration(snapshot: CrmSnapshot): Promise<MigrationPreview>;
