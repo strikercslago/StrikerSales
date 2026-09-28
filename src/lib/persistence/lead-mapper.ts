@@ -47,7 +47,11 @@ export function toLeadRow(input: LeadDraft | LeadChanges): Row {
   };
   const allowed = ["externalId", "batchId", "name", "businessName", "segment", "city", "state", "country", "address", "phone", "normalizedPhone", "whatsappUrl", "contactUrl", "website", "websiteStatus", "instagram", "instagramStatus", "rating", "reviewCount", "score", "priority", "pain", "opportunity", "message", "followupMessage", "notes", "status", "validationRequired", "source", "mapsSearchUrl", "approachedAt", "respondedAt", "followupAt", "proposalAt", "closedAt", "deletedAt", "extra"];
   const row: Row = {};
-  for (const key of allowed) if (source[key] !== undefined) row[map[key] ?? key] = source[key] || null;
+  for (const key of allowed) {
+    if (source[key] !== undefined) {
+      row[map[key] ?? key] = source[key] === "" ? null : source[key];
+    }
+  }
   if (source.phone !== undefined || source.whatsappUrl !== undefined) {
     row.normalized_phone = normalizePhone(optionalString(source.phone)) ?? phoneFromWhatsAppUrl(optionalString(source.whatsappUrl)) ?? null;
   }
