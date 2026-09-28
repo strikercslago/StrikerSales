@@ -137,7 +137,7 @@ export class SupabaseLeadRepository implements LeadRepository {
     if (searchId) {
       const { data: previous, error: previousError } = await this.client.from("lead_batches").select("id").contains("metadata", { prospectingSearchId: searchId }).maybeSingle();
       if (previousError) throw new Error(`Não foi possível verificar a importação: ${previousError.message}`);
-      if (previous) throw new Error("O resultado desta busca já foi importado.");
+      if (previous) throw new Error("O identificador desta busca já foi importado. Se este arquivo contém uma nova pesquisa, gere uma nova busca na Central de Prospecção ou solicite um lote independente corrigido. Renomear o arquivo não altera o identificador. As empresas já cadastradas continuam protegidas contra duplicação.");
     }
     const existing = await this.getLeads("all");
     const { unique, duplicates: currentDuplicates } = deduplicateLeads(result.newLeads, existing);

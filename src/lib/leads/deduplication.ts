@@ -7,7 +7,17 @@ const textKey = (value?: string) =>
 
 const domainKey = (value?: string) => {
   if (!value) return undefined;
-  try { return new URL(value.match(/^https?:\/\//) ? value : `https://${value}`).hostname.replace(/^www\./, "").toLowerCase(); }
+  try {
+    const url = new URL(value.match(/^https?:\/\//) ? value : `https://${value}`);
+    const host = url.hostname.replace(/^www\./, "").toLowerCase();
+    // Shared profile hosts identify businesses by their profile, not their domain.
+    if (["linktr.ee", "bio.site", "instagram.com", "facebook.com"].includes(host)) {
+      const profile = url.pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
+      return profile ? `${host}/${profile}` : undefined;
+    }
+    if (["wa.me", "wa.link", "api.whatsapp.com", "bit.ly"].includes(host)) return undefined;
+    return host;
+  }
   catch { return textKey(value)?.replace(/^@/, ""); }
 };
 
@@ -69,7 +79,7 @@ export function classifyLeads(candidates: Lead[], existing: Lead[]) {
   for (const lead of candidates) {
     const kind = duplicateKind(lead, [...existing, ...unique, ...possibleDuplicates]);
     if (kind === "confirmed") duplicates.push(lead);
-    else if (kind === "possible") possibleDuplicates.push(lead);
+    else if (kind === "possible" || lead.validationRequired) possibleDuplicates.push(lead);
     else unique.push(lead);
   }
   return { unique, duplicates, possibleDuplicates };
